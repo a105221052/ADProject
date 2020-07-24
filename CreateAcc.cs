@@ -15,7 +15,7 @@ namespace ADProject
         static string domain = "LDAP://bill.com/";
         static string queryString = "LDAP://bill.com/DC=bill,DC=com";
         static string account = "Rabbit@bill.com";
-        static string pwd = "P@ssw0rd";
+        static string pwd = "";
 
 
         static void Main(string[] args)
