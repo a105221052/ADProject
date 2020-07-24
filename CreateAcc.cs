@@ -44,7 +44,7 @@ namespace ADProject
                     Console.WriteLine($"AD : 連線錯誤 : {e}");
                 }
                 Console.WriteLine("請選擇功能 輸入1:新增使用者，輸入2搬移使用者 : ");
-                int n =  int.Parse(Console.ReadLine());
+                int n = int.Parse(Console.ReadLine());
                 if (n == 1)
                 {
                     Console.Write("請輸入要新增的使用者名稱 : ");
@@ -82,15 +82,10 @@ namespace ADProject
 
             using (DirectoryEntry de = new DirectoryEntry(domain + DN, account, pwd)) // AD物件
             {
-                using (DirectorySearcher ds = new DirectorySearcher(de))
+                var result = Search_User(de, userName);
+                if (result != null) // 這個使用者已經存在
                 {
-                    // 確認帳號是否存在, 但最好連同grounp、OU、聯絡人...都一起檢查, 因為一個區域(folder)一個名稱只能出現一次
-                    ds.Filter = $"(&(objectClass=user)(cn={userName}))";
-                    var result = ds.FindOne();
-                    if (result != null) // 這個使用者已經存在
-                    {
-                        return "account is exist";
-                    }
+                    return "account is exist";
                 }
 
                 //建立帳號物件
@@ -117,7 +112,7 @@ namespace ADProject
             }
             return status;
         }
-        
+
         //尋找AD中目標組織單位並回傳 OU 的 DN 值
         public static string Find_OU(string OU)
         {
@@ -214,10 +209,13 @@ namespace ADProject
 
         public static SearchResult Search_User(DirectoryEntry de, string name)
         {
-            DirectorySearcher ds = new DirectorySearcher(de);
-            ds.Filter = string.Format("(&(objectClass=user)(cn={0}))", name);//在 OU 找尋使用者
-            SearchResult result = ds.FindOne();
-            return result;
+            using (DirectorySearcher ds = new DirectorySearcher(de))
+            {
+                // 確認帳號是否存在, 但最好連同grounp、OU、聯絡人...都一起檢查, 因為一個區域(folder)一個名稱只能出現一次
+                ds.Filter = string.Format("(&(objectClass=user)(cn={0}))", name);//在 OU 找尋使用者
+                SearchResult result = ds.FindOne();
+                return result;
+            }
         }
     }
 }
