@@ -20,7 +20,6 @@ namespace ADProject
 
         static void Main(string[] args)
         {
-
             using (de = new DirectoryEntry(queryString, account, pwd)) // AD物件
             {
                 string value = "";
@@ -43,7 +42,8 @@ namespace ADProject
                 {
                     Console.WriteLine($"AD : 連線錯誤 : {e}");
                 }
-                Console.WriteLine("請選擇功能 輸入1:新增使用者，輸入2搬移使用者 : ");
+                Console.WriteLine("請選擇功能\n 輸入1:新增使用者，輸入2:搬移使用者，\n"+
+                                              " 輸入3:設定帳戶到期日，輸入4:刪除帳戶");
                 int n = int.Parse(Console.ReadLine());
                 if (n == 1)
                 {
@@ -54,7 +54,7 @@ namespace ADProject
                     string result = Create_User(userOU, newUser);
                     Console.WriteLine($"新增結果 : {result}");
                 }
-                else
+                else if(n==2)
                 {
                     Console.Write("請輸入搬移對象的 OU : ");
                     string userOU = Console.ReadLine();
@@ -64,6 +64,26 @@ namespace ADProject
                     string destinationOU = Console.ReadLine();
                     string moveResult = Move_User(userName, userOU, destinationOU);
                     Console.WriteLine(moveResult);
+                }
+                else if (n == 3)
+                {
+                    // 設定帳戶到期日是今日
+                    Console.Write("請輸入設定對象的 OU : ");
+                    string userOU = Console.ReadLine();
+                    Console.Write("請輸入設定對象的名稱 : ");
+                    string userName = Console.ReadLine();
+                    string setExpiredDate = Set_Expired_Date(userOU, userName);
+                    Console.WriteLine(setExpiredDate);
+                }
+                else
+                {
+                    //刪除帳號
+                    Console.Write("請輸入刪除對象的 OU : ");
+                    string userOU = Console.ReadLine();
+                    Console.Write("請輸入刪除對象的名稱 : ");
+                    string userName = Console.ReadLine();
+                    string delUser = Del_User(userOU, userName);
+                    Console.WriteLine(delUser);
                 }
                 Console.ReadLine();
             }
@@ -143,6 +163,7 @@ namespace ADProject
             {
                 var val = (int)accountStatus.Properties["userAccountControl"].Value;
                 accountStatus.Properties["userAccountControl"].Value = val ^ 0x2; //去做XOR，也就是啟動會變停用，停用會變啟用
+                //直接改0x200也可以
                 accountStatus.CommitChanges();
             }
         }
@@ -217,5 +238,61 @@ namespace ADProject
                 return result;
             }
         }
+
+        public static string Set_Expired_Date(string OU, string name)
+        {
+            string message = "fail";
+            string DN = Find_OU(OU); //先檢查OU存不存在，存在會回傳 OU 的 DN
+            if (DN == "null")
+            {
+                return "OU is not exist";
+            }
+            using (DirectoryEntry de = new DirectoryEntry(domain + DN, account, pwd))
+            {
+                var result = Search_User(de, name);
+                if (result == null) // 這個使用者不存在
+                {
+                    return "OU 裡不存在此 User.";
+                }
+                //取得使用者物件
+                using(DirectoryEntry userObject = new DirectoryEntry(result.Path, account, pwd))
+                {
+                    DateTime date = new DateTime();
+                    date = DateTime.Now;
+                    //停用帳號
+                    userObject.Properties["accountExpires"].Value = date.ToFileTime().ToString();
+                    // 如要啟用帳戶
+                    // userObject.Properties["accountExpires"].Value = 0;
+                    userObject.CommitChanges();
+                    message = "success";
+                }
+            }
+            return message;
+        }
+
+        public static string Del_User(string OU, string name)
+        {
+            string DN = Find_OU(OU); //先檢查OU存不存在，存在會回傳 OU 的 DN
+            if (DN == "null")
+            {
+                return "OU is not exist";
+            }
+           using(DirectoryEntry de = new DirectoryEntry(domain + DN , account, pwd))
+           {
+                var result = Search_User(de, name);
+                if (result == null) // 這個使用者不存在
+                {
+                    return "OU 裡不存在此 User.";
+                }
+                // 如果 OU 不存在 USER 沒 return 會出錯, 因為result.Path就沒有值了
+                using(DirectoryEntry userObject = new DirectoryEntry(result.Path, account, pwd))
+                {
+                    de.Children.Remove(userObject);
+                }
+            }
+            return "success";
+        }
     }
 }
+
+
