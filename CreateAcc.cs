@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.DirectoryServices;
 using System.Configuration;
+using System.Collections;
 
 namespace ADProject
 {
@@ -42,61 +43,120 @@ namespace ADProject
                 {
                     Console.WriteLine($"AD : 連線錯誤 : {e}");
                 }
-                Console.WriteLine("請選擇功能\n 輸入1:新增使用者，輸入2:搬移使用者，\n"+
-                                              " 輸入3:設定帳戶到期日，輸入4:刪除帳戶\n"+   
-                                              " 輸入5:加入群組");
-                int n = int.Parse(Console.ReadLine());
-                if (n == 1)
+                string restart = "y";
+                while (restart.ToLower() == "y")
                 {
-                    Console.Write("請輸入要新增的使用者名稱 : ");
-                    string newUser = Console.ReadLine().Trim();
-                    Console.Write("請輸入此使用者的 OU : ");
-                    string userOU = Console.ReadLine();
-                    string result = Create_User(userOU, newUser);
-                    Console.WriteLine($"新增結果 : {result}");
-                }
-                else if(n==2)
-                {
-                    Console.Write("請輸入搬移對象的 OU : ");
-                    string userOU = Console.ReadLine();
-                    Console.Write("請輸入搬移對象的名稱 : ");
-                    string userName = Console.ReadLine();
-                    Console.Write("請輸入要搬移至哪個 OU : ");
-                    string destinationOU = Console.ReadLine();
-                    string moveResult = Move_User(userName, userOU, destinationOU);
-                    Console.WriteLine(moveResult);
-                }
-                else if (n == 3)
-                {
-                    // 設定帳戶到期日是今日
-                    Console.Write("請輸入設定對象的 OU : ");
-                    string userOU = Console.ReadLine();
-                    Console.Write("請輸入設定對象的名稱 : ");
-                    string userName = Console.ReadLine();
-                    string setExpiredDate = Set_Expired_Date(userOU, userName);
-                    Console.WriteLine(setExpiredDate);
-                }
-                else if(n == 4)
-                {
-                    //刪除帳號
-                    Console.Write("請輸入刪除對象的 OU : ");
-                    string userOU = Console.ReadLine();
-                    Console.Write("請輸入刪除對象的名稱 : ");
-                    string userName = Console.ReadLine();
-                    string delUser = Del_User(userOU, userName);
-                    Console.WriteLine(delUser);
-                }
-                else
-                {
-                    //加入群組
-                    Console.Write("請輸入使用者的 OU : ");
-                    string userOU = Console.ReadLine();
-                    Console.Write("請輸入使用者的名稱 : ");
-                    string userName = Console.ReadLine();
-                    Console.WriteLine("請輸入目標 GROUP");
-                    string group = Console.ReadLine();
-                    string joinGroup = Join_Group(userOU, userName, group);
-                    Console.WriteLine(joinGroup);
+                    string[] func = new string[]{
+                    "輸入0:退出","輸入1:新增使用者","輸入2:搬移使用者","輸入3:設定帳戶到期日",
+                    "輸入4:刪除帳戶","輸入5:加入群組", "輸入6:重設使用者密碼"
+                    };
+                    bool flag = false;
+                    int n = 0;
+                    while (!flag)
+                    {
+                        for (int i = 0; i < func.Length; i += 2)
+                        {
+                            int length = func[i].Length;
+                            while (length < 12)
+                            {
+                                func[i] = func[i].Insert(func[i].Length, "  ");
+                                length++;
+                            }
+                            try
+                            {
+                                Console.WriteLine("{0} {1}", func[i], func[i + 1]);
+                            }
+                            catch
+                            {
+                                //超出陣列
+                                Console.WriteLine(func[i]);
+                            }
+                        }
+                        try
+                        {
+                            n = int.Parse(Console.ReadLine());
+                            flag = true;
+                        }
+                        catch
+                        {
+                            Console.WriteLine("請輸入正確代號\n");
+                        }
+                    }
+                    if (n == 0)
+                    {
+                        Environment.Exit(0);
+                       // break;
+                    }
+                    if (n == 1)
+                    {
+                        Console.Write("請輸入要新增的使用者名稱 : ");
+                        string newUser = Console.ReadLine().Trim();
+                        Console.Write("請輸入此使用者的 OU : ");
+                        string userOU = Console.ReadLine();
+                        string result = Create_User(userOU, newUser);
+                        Console.WriteLine($"新增結果 : {result}");
+                    }
+                    else if (n == 2)
+                    {
+                        Console.Write("請輸入搬移對象的 OU : ");
+                        string userOU = Console.ReadLine();
+                        Console.Write("請輸入搬移對象的名稱 : ");
+                        string userName = Console.ReadLine();
+                        Console.Write("請輸入要搬移至哪個 OU : ");
+                        string destinationOU = Console.ReadLine();
+                        string moveResult = Move_User(userName, userOU, destinationOU);
+                        Console.WriteLine(moveResult);
+                    }
+                    else if (n == 3)
+                    {
+                        // 設定帳戶到期日是今日
+                        Console.Write("請輸入設定對象的 OU : ");
+                        string userOU = Console.ReadLine();
+                        Console.Write("請輸入設定對象的名稱 : ");
+                        string userName = Console.ReadLine();
+                        string setExpiredDate = Set_Expired_Date(userOU, userName);
+                        Console.WriteLine(setExpiredDate);
+                    }
+                    else if (n == 4)
+                    {
+                        //刪除帳號
+                        Console.Write("請輸入刪除對象的 OU : ");
+                        string userOU = Console.ReadLine();
+                        Console.Write("請輸入刪除對象的名稱 : ");
+                        string userName = Console.ReadLine();
+                        string delUser = Del_User(userOU, userName);
+                        Console.WriteLine(delUser);
+                    }
+                    else if (n == 5)
+                    {
+                        //加入群組
+                        Console.Write("請輸入使用者的 OU : ");
+                        string userOU = Console.ReadLine();
+                        Console.Write("請輸入使用者的名稱 : ");
+                        string userName = Console.ReadLine();
+                        Console.WriteLine("請輸入目標 GROUP");
+                        string group = Console.ReadLine();
+                        string joinGroup = Join_Group(userOU, userName, group);
+                        Console.WriteLine(joinGroup);
+                    }
+                    else
+                    {
+                        //重設使用者密碼
+                        Console.WriteLine("請輸入使用者的OU : ");
+                        string userOU = Console.ReadLine();
+                        Console.WriteLine("請輸入使用者的名稱 : ");
+                        string userName = Console.ReadLine();
+                        Console.WriteLine("請輸入新密碼");
+                        string newPwd = Console.ReadLine();
+                        string result = Change_Pwd(userOU, userName, newPwd);
+                        Console.WriteLine(result);
+                    }
+                    restart = "";//清空，等待這次回應
+                    while (restart.ToLower() != "n" && restart.ToLower() != "y")
+                    {
+                        Console.WriteLine("continue?");
+                        restart = Console.ReadLine();
+                    }
                 }
                 Console.ReadLine();
             }
@@ -266,7 +326,7 @@ namespace ADProject
                     return "OU 裡不存在此 User.";
                 }
                 //取得使用者物件
-                using(DirectoryEntry userObject = new DirectoryEntry(result.Path, account, pwd))
+                using (DirectoryEntry userObject = new DirectoryEntry(result.Path, account, pwd))
                 {
                     DateTime date = new DateTime();
                     date = DateTime.Now;
@@ -288,15 +348,15 @@ namespace ADProject
             {
                 return "OU is not exist";
             }
-           using(DirectoryEntry de = new DirectoryEntry(domain + DN , account, pwd))
-           {
+            using (DirectoryEntry de = new DirectoryEntry(domain + DN, account, pwd))
+            {
                 var result = Search_User(de, name);
                 if (result == null) // 這個使用者不存在
                 {
                     return "OU 裡不存在此 User.";
                 }
                 // 如果 OU 不存在 USER 沒 return 會出錯, 因為result.Path就沒有值了
-                using(DirectoryEntry userObject = new DirectoryEntry(result.Path, account, pwd))
+                using (DirectoryEntry userObject = new DirectoryEntry(result.Path, account, pwd))
                 {
                     de.Children.Remove(userObject);
                 }
@@ -314,8 +374,8 @@ namespace ADProject
             {
                 return "OU is not exist";
             }
-            
-            using(DirectoryEntry de = new DirectoryEntry(domain + OUDN, account, pwd))
+
+            using (DirectoryEntry de = new DirectoryEntry(domain + OUDN, account, pwd))
             {
                 var user = Search_User(de, name);
                 if (user == null)
@@ -333,7 +393,7 @@ namespace ADProject
                 // 確定 OU、USER、GROUP 都存在
                 else
                 {
-                    using (DirectoryEntry groupDE = new DirectoryEntry(domain+groupDN, account, pwd ))
+                    using (DirectoryEntry groupDE = new DirectoryEntry(domain + groupDN, account, pwd))
                     {
                         groupDE.Properties["member"].Add(userDN);
                         groupDE.CommitChanges();
@@ -343,7 +403,7 @@ namespace ADProject
             }
             return result;
         }
-        
+
         public static string Find_Group(string Group)
         {
             using (DirectorySearcher sr = new DirectorySearcher(de))
@@ -366,6 +426,37 @@ namespace ADProject
             }
         }
 
+        public static string Change_Pwd(string OU, string name, string newPwd)
+        {
+            string result = "fail";
+            string OUDN = Find_OU(OU);
+            if (OUDN == "null")
+            {
+                return $"OU : {OU} 不存在";
+            }
+            using (DirectoryEntry de = new DirectoryEntry(domain + OUDN, account, pwd))
+            {
+                var user = Search_User(de, name);
+                if (user == null)
+                {
+                    return $"User : {name} 不存在";
+                }
+                using (DirectoryEntry changePwd = new DirectoryEntry(user.Path, account, pwd))
+                {
+                    try
+                    {
+                        changePwd.Invoke("SetPassword", new object[] { newPwd });
+                        changePwd.CommitChanges();
+                    }
+                    catch
+                    {
+                        return "密碼不符合複雜性原則!";
+                    }
+                    result = $"使用者 {name} 密碼已變更!";
+                }
+            }
+            return result;
+        }
     }
 }
 
