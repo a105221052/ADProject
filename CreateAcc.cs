@@ -43,7 +43,8 @@ namespace ADProject
                     Console.WriteLine($"AD : 連線錯誤 : {e}");
                 }
                 Console.WriteLine("請選擇功能\n 輸入1:新增使用者，輸入2:搬移使用者，\n"+
-                                              " 輸入3:設定帳戶到期日，輸入4:刪除帳戶");
+                                              " 輸入3:設定帳戶到期日，輸入4:刪除帳戶\n"+   
+                                              " 輸入5:加入群組");
                 int n = int.Parse(Console.ReadLine());
                 if (n == 1)
                 {
@@ -75,7 +76,7 @@ namespace ADProject
                     string setExpiredDate = Set_Expired_Date(userOU, userName);
                     Console.WriteLine(setExpiredDate);
                 }
-                else
+                else if(n == 4)
                 {
                     //刪除帳號
                     Console.Write("請輸入刪除對象的 OU : ");
@@ -84,6 +85,18 @@ namespace ADProject
                     string userName = Console.ReadLine();
                     string delUser = Del_User(userOU, userName);
                     Console.WriteLine(delUser);
+                }
+                else
+                {
+                    //加入群組
+                    Console.Write("請輸入使用者的 OU : ");
+                    string userOU = Console.ReadLine();
+                    Console.Write("請輸入使用者的名稱 : ");
+                    string userName = Console.ReadLine();
+                    Console.WriteLine("請輸入目標 GROUP");
+                    string group = Console.ReadLine();
+                    string joinGroup = Join_Group(userOU, userName, group);
+                    Console.WriteLine(joinGroup);
                 }
                 Console.ReadLine();
             }
@@ -220,10 +233,8 @@ namespace ADProject
                 {
                     Console.WriteLine("管理者帳戶或密碼錯誤");
                 }
-
                 return msg;
             }
-
         }
 
         #endregion
@@ -292,6 +303,69 @@ namespace ADProject
             }
             return "success";
         }
+
+        public static string Join_Group(string OU, string name, string group)
+        {
+            string result = "fail";
+            string userPath = "";
+            string userDN = "";
+            string OUDN = Find_OU(OU);
+            if (OUDN == "null")
+            {
+                return "OU is not exist";
+            }
+            
+            using(DirectoryEntry de = new DirectoryEntry(domain + OUDN, account, pwd))
+            {
+                var user = Search_User(de, name);
+                if (user == null)
+                {
+                    return "OU 不存在此 USER";
+                }
+                userPath = user.Path;
+                userDN = user.Properties["distinguishedName"][0].ToString(); ;
+                string groupDN = Find_Group(group);//目前的寫法是整個 domian 的 group 都會找到
+                // 如要限定 OU 多帶一個參數 Find_Group(group, de) 即可
+                if (groupDN == "null")
+                {
+                    return "此 Group 不存在";
+                }
+                // 確定 OU、USER、GROUP 都存在
+                else
+                {
+                    using (DirectoryEntry groupDE = new DirectoryEntry(domain+groupDN, account, pwd ))
+                    {
+                        groupDE.Properties["member"].Add(userDN);
+                        groupDE.CommitChanges();
+                        result = $"使用者 {name} 成功加入群組 : {group}";
+                    }
+                }
+            }
+            return result;
+        }
+        
+        public static string Find_Group(string Group)
+        {
+            using (DirectorySearcher sr = new DirectorySearcher(de))
+            {
+                sr.Filter = string.Format("(&(objectClass=group)(cn={0}))", Group);
+                try // 使用者帳號或密碼如有錯誤 sr.FindOne會出現錯誤
+                {
+                    SearchResult result = sr.FindOne();
+                    if (result != null)
+                    {
+                        // Console.WriteLine(result.Properties["distinguishedName"][0].ToString());
+                        return result.Properties["distinguishedName"][0].ToString();
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine("管理者帳戶或密碼錯誤");
+                }
+                return "null";
+            }
+        }
+
     }
 }
 
